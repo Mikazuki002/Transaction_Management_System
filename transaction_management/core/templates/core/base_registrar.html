@@ -1,0 +1,31 @@
+<!-- This makes other registrar pages become reusable when using the layout-->
+
+
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Registrar Dashboard - {% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'core/registrar.css' %}">
+  <script src="{% static 'core/registrar.js' %}"></script>
+</head>
+<body>
+  <header>
+    <h1>Registrar Dashboard</h1>
+  </header>
+
+  <aside>
+    <ul>
+      <li><a href="{% url 'core:registrar_dashboard' %}">Dashboard</a></li>
+      <li><a href="{% url 'core:approval_list' %}">Approvals</a></li>
+      <li><a href="{% url 'core:registrar_appointments' %}">Appointments</a></li>
+      <li><a href="{% url 'admin:index' %}">Admin</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

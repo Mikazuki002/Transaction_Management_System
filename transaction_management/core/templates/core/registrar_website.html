@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { box-sizing: border-box; }
+
+        .fade-in {
+            animation: fadeIn .25s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-tab {
+            position: relative;
+            padding: 1rem 0;
+            font-weight: 500;
+            color: #6b7280;
+            transition: color .2s ease;
+        }
+
+        .nav-tab::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -1px;
+            width: 0%;
+            height: 3px;
+            background-color: #2563eb;
+            transition: width .25s ease;
+        }
+
+        .nav-tab:hover {
+            color: #1f2937;
+        }
+
+        .nav-tab.active {
+            color: #2563eb;
+        }
+
+        .nav-tab.active::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+
+<header class="bg-white shadow border-b-4 border-blue-600">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.414 5.414V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Transaction Management System</h1>
+                <p class="text-sm text-gray-500">Academic Records Management</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden md:block">
+                <p class="text-sm font-medium text-gray-700">
+                    {{ user.first_name|default:user.username }} {{ user.last_name }}
+                </p>
+                <p class="text-xs text-gray-500">{{ role }}</p>
+            </div>
+
+            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                {{ initials }}
+            </div>
+
+            <form method="post" action="{% url 'core:logout' %}">
+                {% csrf_token %}
+                <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- NAV TABS -->
+    <div class="bg-white rounded-xl shadow mb-6">
+        <nav class="flex gap-8 px-6 border-b">
+            <button onclick="showTab('dashboard')" id="tab-dashboard" class="nav-tab active">Dashboard</button>
+            {% if user.is_superuser %}
+            <button onclick="showTab('students')" id="tab-students" class="nav-tab">Student Records</button>
+            <button onclick="showTab('reports')" id="tab-reports" class="nav-tab">Reports</button>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard-content" class="fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-yellow-500">
+                <p class="text-sm text-gray-500">Pending Requests</p>
+                <p class="text-3xl font-bold">{{ pending_profiles }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+                <p class="text-sm text-gray-500">Processing</p>
+                <p class="text-3xl font-bold">{{ processing_appointments }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+                <p class="text-sm text-gray-500">Completed Today</p>
+                <p class="text-3xl font-bold">{{ completed_today }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border-l-4 border-purple-500">
+                <p class="text-sm text-gray-500">This Month</p>
+                <p class="text-3xl font-bold">{{ total_this_month }}</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <a href="{% url 'core:registrar_certificates' %}" class="bg-green-100 hover:bg-green-200 p-6 rounded-xl shadow">
+                <h3 class="font-semibold text-green-800">Certificate Requests</h3>
+                <p class="text-sm text-gray-700">Approve & manage documents</p>
+            </a>
+            <a href="{% url 'core:registrar_appointments' %}" class="bg-blue-100 hover:bg-blue-200 p-6 rounded-xl shadow">
+                <h3 class="font-semibold text-blue-800">Appointments</h3>
+                <p class="text-sm text-gray-700">Process student appointments</p>
+            </a>
+            <a href="{% url 'core:approval_list' %}" class="bg-yellow-100 hover:bg-yellow-200 p-6 rounded-xl shadow">
+                <h3 class="font-semibold text-yellow-800">Pending Accounts</h3>
+                <p class="text-sm text-gray-700">Approve new student users</p>
+            </a>
+        </div>
+    </section>
+
+    {% if user.is_superuser %}
+    <!-- STUDENT RECORDS -->
+    <section id="students-content" class="hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-semibold text-gray-800">Student Records</h2>
+    <a href="{% url 'core:export_students' %}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+       Export CSV
+    </a>
+</div>
+
+        <div class="bg-white p-6 rounded-xl shadow border border-gray-200">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">Student Records</h2>
+            {% if students %}
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-3">Student No.</th>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Course</th>
+                            <th class="px-4 py-3">Year</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3">Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for profile in students %}
+                        <tr class="hover:bg-blue-50 transition">
+                            <td class="px-4 py-3 font-medium">{{ profile.student_number }}</td>
+                            <td class="px-4 py-3">{{ profile.user.last_name }}, {{ profile.user.first_name }}</td>
+                            <td class="px-4 py-3">{{ profile.course }}</td>
+                            <td class="px-4 py-3">{{ profile.year_level }}</td>
+                            <td class="px-4 py-3 text-center">
+                                {% if profile.is_rejected %}
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Rejected</span>
+                                {% elif profile.is_approved_by_registrar %}
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Approved</span>
+                                {% else %}
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">{{ profile.submitted_at|date:"Y-m-d" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-sm text-gray-500">No student records available.</p>
+            {% endif %}
+        </div>
+    </section>
+
+            <!-- REPORTS -->
+<section id="reports-content" class="hidden fade-in">
+    <div class="bg-white p-6 rounded-xl shadow">
+
+        <h2 class="text-lg font-semibold mb-2">Reports & Analytics</h2>
+        <p class="text-sm text-gray-500 mb-6">
+            Generate downloadable reports for administrative review and decision-making.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Report: Student Request Summary -->
+            <div class="border rounded-lg p-5 hover:shadow transition">
+                <h3 class="font-semibold text-gray-800 mb-2">
+                    📄 Student Request Summary
+                </h3>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    Contains a summary of all student requests submitted within a selected
+                    time range. This includes the total number of requests, their current
+                    statuses (pending, approved, rejected), and request trends.
+                </p>
+
+                <div class="flex justify-end">
+                    <a href="{% url 'core:export_request_summary' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">
+                        Export Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Report: Certificate Issuance Records -->
+            <div class="border rounded-lg p-5 hover:shadow transition">
+                <h3 class="font-semibold text-gray-800 mb-2">
+                    📜 Certificate Issuance Records
+                </h3>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    Provides detailed records of issued certificates, including the type
+                    of certificate, number of times issued, and issuance dates. Useful for
+                    tracking document distribution.
+                </p>
+
+                <div class="flex justify-end">
+                    <a href="{% url 'core:export_certificate_issuance' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">
+                        Export Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Report: Most Requested Certificate Types -->
+            <div class="border rounded-lg p-5 hover:shadow transition">
+                <h3 class="font-semibold text-gray-800 mb-2">
+                    📊 Most Requested Certificate Types
+                </h3>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    Shows which certificate types are most frequently requested by students.
+                    This report helps identify high-demand documents for better processing
+                    and resource planning.
+                </p>
+
+                <div class="flex justify-end">
+                    <a href="{% url 'core:export_top_certificates' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">
+                        Export Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Report: Registrar Processing Performance -->
+            <div class="border rounded-lg p-5 hover:shadow transition">
+                <h3 class="font-semibold text-gray-800 mb-2">
+                    ⏱ Registrar Processing Performance
+                </h3>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    Displays processing statistics such as average approval time,
+                    number of requests handled per day, and completion rates.
+                    Useful for internal performance evaluation.
+                </p>
+
+                <div class="flex justify-end">
+                    <a href="{% url 'core:export_processing_performance' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">
+                        Export Report
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+         {% endif %}
+<script>
+function showTab(tab) {
+    // hide all tab contents
+    document.querySelectorAll('[id$="-content"]').forEach(c => {
+        c.classList.add('hidden');
+    });
+
+    // remove active underline from all tabs
+    document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.remove('active');
+    });
+
+    // check if element exists
+    const content = document.getElementById(tab + '-content');
+    const tabBtn = document.getElementById('tab-' + tab);
+    if (content && tabBtn) {
+        content.classList.remove('hidden');
+        tabBtn.classList.add('active');
+    }
+}
+</script>
+
+</body>
+</html>

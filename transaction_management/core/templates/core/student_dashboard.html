@@ -1,0 +1,273 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    
+    <!-- ⭐ ADD TAILWIND CSS (VERY IMPORTANT for pagination design) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+    <style>
+    body { background: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+    .container {
+        max-width: 1100px;
+        margin: 1.5rem auto;
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .card { background: #f9fafb; padding: 1rem 1.2rem; border-radius: 8px; border-left: 5px solid #2563eb; }
+    .btn { background: #2563eb; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; }
+    .btn:hover { background: #1d4ed8; }
+
+    /* Logout Button */
+    .logout-button {
+        position: relative; padding: 12px 32px; background: #E53E3E; color: white; font-weight: 700; font-size: 16px;
+        border: none; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(229, 62, 62, 0.3),
+        0 1px 3px rgba(0,0,0,0.2);
+    }
+    .logout-button:hover { background: #C53030; transform: translateY(-2px); }
+    .logout-icon { width: 18px; height: 18px; transition: transform 0.3s ease; }
+    .logout-button:hover .logout-icon { transform: translateX(3px); }
+    .confirmation-message { background:white; color:#2D3748; padding:10px 16px; border-radius:8px;
+        margin-top:8px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.2);
+        position:absolute; top:50px; left:50%; transform:translateX(-50%); opacity:0;
+        transition:all .4s ease; pointer-events:none; text-align:center;
+    }
+    .confirmation-message.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    </style>
+</head>
+
+<body>
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert" style="background:#def1d8; color:#1a5d1a; padding:10px; border-radius:6px; margin-bottom:10px;">
+        {{ message }}
+        </div>
+    {% endfor %}
+    {% endif %}
+
+<div class="container">
+    <div class="header">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-1">Welcome, {{ user.first_name }}!</h2>
+
+        <form action="{% url 'core:logout' %}" method="post" style="position: relative;">
+            {% csrf_token %}
+            <button type="submit" class="logout-button" id="logout-btn">
+                Logout
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+            <div class="confirmation-message" id="confirmation-message">Successfully logged out!</div>
+        </form>
+    </div>
+
+    <!-- Cards -->
+    <div class="card-grid">
+        <div class="card"><h4>Appointments</h4><p>{{ appointments.count }} total</p></div>
+        <div class="card"><h4>Certificates</h4><p>{{ certificates.count }} total</p></div>
+        <div class="card"><h4>Profile</h4><p>{{ profile.course }} - {{ profile.year_level }}</p></div>
+    </div>
+
+
+    <!-- ====================== APPOINTMENTS ====================== -->
+    <div class="bg-white shadow-lg rounded-xl p-6 mt-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-1">Appointments</h2>
+        <p class="text-gray-500 text-sm mb-5">Your appointment bookings.</p>
+
+        <div class="overflow-x-auto rounded-lg border border-gray-200" style="max-height: 400px; overflow-y: auto;">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-100 border-b">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Date</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Time</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Purpose</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Approved By</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y">
+                {% for a in app_page_obj %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-3">{{ a.appointment_date }}</td>
+                    <td class="px-4 py-3">{{ a.appointment_time }}</td>
+                    <td class="px-4 py-3">{{ a.purpose }}</td>
+                    <td class="px-4 py-3">
+                        {% if a.status == "Pending" %}
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Pending</span>
+                        {% elif a.status == "Approved" %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Approved</span>
+                        {% elif a.status == "Declined" %}
+                        <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Declined</span>
+                        {% elif a.status == "Processing" %}
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Processing</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">{% if a.approved_by %}{{ a.approved_by.first_name }} {{ a.approved_by.last_name }}{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-6 text-gray-500">No appointments found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ⭐ Pagination Styled -->
+        <div class="flex justify-between items-center mt-4">
+            {% if app_page_obj.has_previous %}
+                <a href="?app_page={{ app_page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</a>
+            {% else %}
+                <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
+            {% endif %}
+
+            <span class="text-gray-600">Page {{ app_page_obj.number }} of {{ app_page_obj.paginator.num_pages }}</span>
+
+            {% if app_page_obj.has_next %}
+                <a href="?app_page={{ app_page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</a>
+            {% else %}
+                <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
+            {% endif %}
+        </div>
+
+        <a href="{% url 'core:student_appointments' %}" class="btn mt-3 inline-block">Book Appointment</a>
+    </div>
+
+
+    <!--  CERTIFICATES  -->
+<div class="bg-white shadow-lg rounded-xl p-6 mt-10">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-1">Certificate Requests</h2>
+    <p class="text-gray-500 text-sm mb-5">View and track your certificate requests.</p>
+
+    <div class="overflow-x-auto rounded-lg border border-gray-200" style="max-height: 400px; overflow-y: auto;">
+        <table class="min-w-full text-sm">
+            <thead class="bg-gray-100 border-b">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Requested Date</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Requested Time</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Type</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Purpose</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Status</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Approved By</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y">
+            {% for c in cert_page_obj %}
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3">
+                    {{ c.requested_at|date:"M d, Y" }}
+                </td>
+                <td class="px-4 py-3">
+                    {{ c.requested_at|time:"h:i A" }}
+                </td>
+                <td class="px-4 py-3">{{ c.certificate_type }}</td>
+                <td class="px-4 py-3">{{ c.purpose }}</td>
+                <td class="px-4 py-3">
+                    {% if c.status == "Pending" %}
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Pending</span>
+                    {% elif c.status == "Approved" %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Approved</span>
+                    {% elif c.status == "Released" %}
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Released</span>
+                    {% elif c.status == "Declined" %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Declined</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                    {% if c.approved_by %}
+                        {{ c.approved_by.first_name }} {{ c.approved_by.last_name }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center py-6 text-gray-500">
+                    No certificate requests yet.
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (UNCHANGED) -->
+    <div class="flex justify-between items-center mt-4">
+        {% if cert_page_obj.has_previous %}
+            <a href="?cert_page={{ cert_page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
+        {% endif %}
+
+        <span class="text-gray-600">
+            Page {{ cert_page_obj.number }} of {{ cert_page_obj.paginator.num_pages }}
+        </span>
+
+        {% if cert_page_obj.has_next %}
+            <a href="?cert_page={{ cert_page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
+        {% endif %}
+    </div>
+
+    <a href="{% url 'core:certificate_request' %}" class="btn mt-3 inline-block">
+        Request Certificate
+    </a>
+</div>
+
+
+</div>
+
+<script>
+const logoutBtn = document.getElementById('logout-btn');
+const confirmationMsg = document.getElementById('confirmation-message');
+logoutBtn.addEventListener('click', (e) => {
+    confirmationMsg.classList.add('show');
+    setTimeout(() => confirmationMsg.classList.remove('show'), 2000);
+});
+</script>
+
+{% if show_popup %}
+<div id="popupModal"
+     class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl p-6 w-96 text-center animate-fadeIn">
+        <h3 class="text-xl font-semibold text-green-700 mb-3">🎉 Certificate Ready for Pickup!</h3>
+        
+        {% for c in released_certs %}
+            <div class="text-gray-700 text-sm mb-3 border-b pb-2">
+                📎 <strong>{{ c.get_certificate_type_display }}</strong><br>
+
+                📝 <span class="text-gray-600 text-xs">
+                    Requested: {{ c.requested_at|date:"M d, Y — h:i A" }}
+                </span><br>
+
+                📅 Pickup: {{ c.requested_at|date:"M d, Y" }} — 🕒 {{ c.requested_at|time:"H:i" }}
+            </div>
+        {% endfor %}
+        
+        <button onclick="closePopup()"
+                class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            OK, Got it
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function closePopup(){
+    document.getElementById("popupModal").style.display = "none";
+}
+</script>
+</body>
+</html>

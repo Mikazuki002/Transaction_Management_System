@@ -1,0 +1,12 @@
+<h2>Reject Account</h2>
+
+<form method="POST">
+  {% csrf_token %}
+
+  <label>Reason for Rejection:</label>
+  <textarea name="reason" required rows="4" style="width:100%;"></textarea>
+
+  <br><br>
+
+  <button type="submit" style="background:red;color:white;padding:10px;">Reject Account</button>
+</form>

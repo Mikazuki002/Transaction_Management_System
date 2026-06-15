@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+<!-- Mobile Navbar -->
+<div class="md:hidden bg-white border-b shadow-sm">
+    <div class="flex justify-between items-center px-4 py-3">
+        <span class="text-gray-700 font-semibold text-lg">Menu</span>
+
+        <button id="mobileMenuBtn" class="text-gray-600 text-3xl focus:outline-none">
+            ☰
+        </button>
+    </div>
+
+    <div id="mobileMenu" class="hidden flex-col px-4 pb-4 space-y-3 text-gray-700">
+        <a href="{% url 'core:registrar_dashboard' %}" class="block hover:text-blue-600">Home</a>
+        <a href="{% url 'core:registrar_appointments' %}" class="block text-blue-600 font-semibold">Appointments</a>
+        <a href="{% url 'core:registrar_certificates' %}" class="block hover:text-blue-600">Certificates</a>
+        <a href="{% url 'core:approval_list' %}" class="block hover:text-blue-600">Pending Accounts</a>
+    </div>
+</div>
+
+<!-- 🖥 Desktop Navbar -->
+<nav class="hidden md:flex space-x-8 text-gray-600 font-medium px-6 py-3 border-b bg-white shadow-sm">
+    <a href="{% url 'core:registrar_dashboard' %}" class="hover:text-blue-600">Home</a>
+    <a href="{% url 'core:registrar_appointments' %}" class="text-blue-600 font-semibold">Appointments</a>
+    <a href="{% url 'core:registrar_certificates' %}" class="hover:text-blue-600">Certificates</a>
+    <a href="{% url 'core:approval_list' %}" class="hover:text-blue-600">Pending Accounts</a>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("mobileMenuBtn");
+    const menu = document.getElementById("mobileMenu");
+
+    btn.addEventListener("click", () => {
+        menu.classList.toggle("hidden");
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-xl p-6 max-w-6xl mx-auto">
+
+    <h2 class="text-xl font-semibold text-gray-800 mb-1">Appointment Requests</h2>
+    <p class="text-gray-500 text-sm mb-4">Manage Student Appointment Request</p>
+
+    <!-- BULK ACTION BUTTONS (ADDED) -->
+    <form method="post" action="{% url 'core:bulk_update_appointments' %}">
+        {% csrf_token %}
+        <div class="flex gap-2 mb-4">
+            <button type="submit" name="action" value="approve"
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                Approve Selected
+            </button>
+
+            <button type="submit" name="action" value="decline"
+                class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                Decline Selected
+            </button>
+        </div>
+
+        <!-- TABLE WRAPPER -->
+        <div class="overflow-x-auto border border-gray-200 rounded-xl">
+
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <!-- CHECKBOX HEADER (ADDED) -->
+                        <th class="px-4 py-2 text-center text-xs font-semibold uppercase text-gray-600">
+                            <input type="checkbox" id="selectAll">
+                        </th>
+
+                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-600">Student</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-600">Date</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-600">Time</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-600">Purpose</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-600">Status</th>
+                        <th class="px-4 py-2 text-center text-xs font-semibold uppercase text-gray-600">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for a in appointments %}
+                    <tr class="border-b hover:bg-gray-50">
+
+                        <!-- CHECKBOX COLUMN (ADDED) -->
+                        <td class="px-4 py-3 text-center">
+                            {% if a.status == "Pending" %}
+                                <input type="checkbox" name="appointment_ids" value="{{ a.id }}" class="rowCheckbox">
+                            {% else %}
+                                <input type="checkbox" disabled class="opacity-50">
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3">{{ a.student.username }}</td>
+                        <td class="px-4 py-3">{{ a.appointment_date }}</td>
+                        <td class="px-4 py-3">{{ a.appointment_time }}</td>
+                        <td class="px-4 py-3">{{ a.purpose }}</td>
+
+                        <td class="px-4 py-3">
+                            {% if a.status == "Pending" %}
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Pending</span>
+                            {% elif a.status == "Approved" %}
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Approved</span>
+                            {% elif a.status == "Declined" %}
+                                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Declined</span>
+                            {% endif %}
+                        </td>
+
+                       <td class="px-4 py-3 text-center space-x-2">
+                            {% if a.status == "Pending" %}
+                                <a href="{% url 'core:update_appointment_status' a.id 'Approved' %}"
+                                class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs hover:bg-green-200">
+                                Approve
+                                </a>
+
+                                <a href="{% url 'core:update_appointment_status' a.id 'Declined' %}"
+                                class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-xs hover:bg-red-200">
+                                Decline
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400 text-xs italic">Action completed</span>
+                            {% endif %}
+                        </td>
+
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-gray-500">No appointments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-between items-center mt-4">
+        {% if appointments.has_previous %}
+            <a href="?page={{ appointments.previous_page_number }}"
+               class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
+        {% endif %}
+
+        <span class="text-gray-600">Page {{ appointments.number }} of {{ appointments.paginator.num_pages }}</span>
+
+        {% if appointments.has_next %}
+            <a href="?page={{ appointments.next_page_number }}"
+               class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- SELECT ALL SCRIPT (ADDED) -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const selectAll = document.getElementById("selectAll");
+    const checkboxes = document.querySelectorAll(".rowCheckbox");
+
+    if (selectAll) {
+        selectAll.addEventListener("change", () => {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        });
+    }
+});
+</script>
+{% endblock %}

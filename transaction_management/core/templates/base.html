@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transaction Management System</title>
+
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #f7f9fc;
+        }
+
+        /* Canva-style Logout Button */
+        .logout-button {
+            position: relative;
+            padding: 10px 24px;
+            background: #E53E3E;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(229,62,62,0.3), 0 1px 3px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-button:hover {
+            background: #C53030;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(229,62,62,0.4), 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .logout-button:active {
+            transform: scale(0.98);
+        }
+        .logout-button:hover svg {
+            transform: translateX(3px);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md border-b-2 border-blue-600">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+            <!-- Logo and Title -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-800">Transaction Management System</h1>
+                    <p class="text-sm text-gray-500">Registrar Document Management Platform</p>
+                </div>
+            </div>
+
+            <!-- Profile and Logout (This is for Desktop ONLY!) -->
+            <div class="hidden md:flex items-center space-x-4">
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-700">
+                        {{ user.first_name }} {{ user.last_name }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        {{ role }}
+                    </p>
+                </div>
+
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {{ initials }}
+                </div>
+
+                <form action="{% url 'core:logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">
+                        Logout
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                             viewBox="0 0 24 24" stroke-width="2">
+                             <polyline points="16 17 21 12 16 7"></polyline>
+                             <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="nav-toggle" class="md:hidden p-2 rounded-lg border">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+
+        </div>
+    </header>
+
+    <!-- This is the navbar for mobile -->
+    <nav class="bg-white border-b shadow-sm">
+        <div id="nav-menu"
+             class="max-w-7xl mx-auto flex flex-col space-y-2 px-6 py-3 text-gray-600 font-medium
+                    md:flex-row md:space-x-8 md:space-y-0">
+            <a href="{% url 'core:registrar_dashboard' %}" class="hover:text-blue-600 {% if request.path == '/registrar/dashboard/' %}text-blue-600 font-semibold{% endif %}">Home</a>
+            <a href="{% url 'core:registrar_appointments' %}" class="hover:text-blue-600 {% if request.path == '/registrar/appointments/' %}text-blue-600 font-semibold{% endif %}">Appointments</a>
+            <a href="{% url 'core:registrar_certificates' %}" class="hover:text-blue-600 {% if request.path == '/registrar/certificates/' %}text-blue-600 font-semibold{% endif %}">Certificates</a>
+            <a href="{% url 'core:approval_list' %}" class="hover:text-blue-600 {% if request.path == '/registrar/approval_list/' %}text-blue-600 font-semibold{% endif %}">Pending Accounts</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-gray-500 text-sm">
+        © 2025 Cavite State University – Transaction System
+    </footer>
+
+    <!-- Nav Toggle Button Script -->
+    <script>
+        document.getElementById("nav-toggle").onclick = function () {
+            const menu = document.getElementById("nav-menu");
+            menu.classList.toggle("hidden");
+        };
+    </script>
+
+</body>
+</html>

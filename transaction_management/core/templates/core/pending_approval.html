@@ -1,0 +1,296 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Review Status</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- SAME CSS FROM YOUR TEMPLATE (NO CHANGES) --- */
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        html { height: 100%; }
+
+        * { box-sizing: border-box; }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .header-section {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: .75rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: .75rem;
+        }
+
+        .header-note {
+            display: inline-flex;
+            align-items: center;
+            background: #eff6ff;
+            color: #1e40af;
+            padding: .625rem 1rem;
+            border-radius: 8px;
+            font-size: .875rem;
+            font-weight: 500;
+            gap: .5rem;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: .875rem;
+            font-weight: 600;
+            letter-spacing: .05em;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .greeting {
+            font-size: 1rem;
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+
+        .greeting strong { color: #1e293b; }
+
+        .status-indicator {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+        }
+
+        /* Hourglass Animation */
+        .hourglass {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            animation: flip 2s ease-in-out infinite;
+        }
+
+        @keyframes flip {
+            50% { transform: rotate(180deg); }
+        }
+
+        .hourglass-top,
+        .hourglass-bottom {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+        }
+
+        .hourglass-top { border-top: 18px solid #f59e0b; top: 0; left: 8px; }
+        .hourglass-bottom { border-bottom: 18px solid #f59e0b; bottom: 0; left: 8px; }
+
+        .hourglass-middle {
+            width: 4px;
+            height: 4px;
+            background: #f59e0b;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .status-text { font-size: 1rem; font-weight: 600; color: #92400e; }
+        .status-subtext { font-size: .875rem; color: #b45309; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-label {
+            font-size: .8125rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .document-link {
+            padding: .75rem 1rem;
+            background: #eff6ff;
+            border-radius: 8px;
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .refresh-button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+<main class="container">
+
+    <!-- Header -->
+    <header class="header-section">
+        <div class="header-icon">
+            <svg width="32" height="32" stroke="white" stroke-width="2" fill="none">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+        </div>
+
+        <h1 class="header-title">
+            {% if profile.is_approved_by_registrar %}
+                Your Account is Approved!
+            {% else %}
+                Your Account is Under Review
+            {% endif %}
+        </h1>
+
+        <p class="header-subtitle">
+            {% if profile.is_approved_by_registrar %}
+                You may now log in to your student dashboard.
+            {% else %}
+                Registrar is reviewing your submitted information.
+            {% endif %}
+        </p>
+
+        <div class="header-note">
+            🔄 Refresh this page to check your approval status.
+        </div>
+    </header>
+
+    <!-- Status Card -->
+    <section class="status-card">
+        <h2 class="section-title">Account Approval Status</h2>
+
+        <p class="greeting">
+            Hello <strong>{{ user.first_name }} {{ user.last_name }}</strong>,
+            thank you for registering!
+        </p>
+
+        {% if profile.is_approved_by_registrar %}
+            <div class="status-indicator" style="background:#dcfce7;border-left:4px solid #22c55e;">
+                <div>✅</div>
+                <div>
+                    <p class="status-text" style="color:#166534;">Your account has been approved!</p>
+                    <p class="status-subtext" style="color:#166534;">You may now proceed to login.</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="status-indicator">
+                <div class="hourglass">
+                    <div class="hourglass-top"></div>
+                    <div class="hourglass-bottom"></div>
+                    <div class="hourglass-middle"></div>
+                </div>
+
+                <div>
+                    <p class="status-text">Waiting for Registrar Approval…</p>
+                    <p class="status-subtext">Please check back later.</p>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Information -->
+    <section class="status-card">
+        <h2 class="section-title">Submitted Information</h2>
+
+        <div class="info-grid">
+            <div>
+                <div class="info-label">Student No</div>
+                <div class="info-value">{{ profile.student_number }}</div>
+            </div>
+            <div>
+                <div class="info-label">Course</div>
+                <div class="info-value">{{ profile.course }}</div>
+            </div>
+            <div>
+                <div class="info-label">Year Level</div>
+                <div class="info-value">{{ profile.year_level }}</div>
+            </div>
+            <div>
+                <div class="info-label">Submitted</div>
+                <div class="info-value">{{ profile.submitted_at|date:"M d, Y" }}</div>
+            </div>
+        </div>
+
+        <a href="{{ profile.document.url }}" class="document-link" target="_blank">
+            📄 View File
+        </a>
+    </section>
+
+    <button class="refresh-button" onclick="location.reload()">Refresh Status</button>
+
+</main>
+</body>
+</html>

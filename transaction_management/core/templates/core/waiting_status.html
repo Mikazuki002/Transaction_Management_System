@@ -1,0 +1,150 @@
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+<div class="min-h-screen bg-gray-100 py-10 px-4 flex justify-center">
+    <div class="max-w-3xl w-full">
+
+        <!-- Page Header -->
+        <div class="bg-gradient-to-r from-green-800 to-green-700 p-6 rounded-2xl shadow-md mb-8">
+            <h1 class="text-3xl font-bold text-white">Account Under Review</h1>
+            <p class="text-green-100">Please wait while the Registrar verifies your information</p>
+        </div>
+
+        <!-- Status CARD -->
+        <div class="relative bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+
+            <!-- Accent Top Border -->
+            <div class="h-2 bg-gradient-to-r from-green-700 to-green-600"></div>
+
+            <div class="p-8">
+                <!-- STATUS PANEL -->
+                <div class="flex items-center space-x-4 bg-green-50 border border-green-200 rounded-xl p-4 mb-6 shadow-sm">
+                    {% if profile.is_approved_by_registrar %}
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-600 text-white text-lg">✓</div>
+                        <div>
+                            <p class="font-semibold text-green-700 text-lg">Your account is approved!</p>
+                            <p class="text-gray-600 text-sm">You may proceed to login.</p>
+                        </div>
+                    {% else %}
+                        {% if not rejected %}
+                        <!-- Only show waiting spinner if NOT rejected -->
+                        <div class="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div>
+                            <p class="font-semibold text-green-700 text-lg">Waiting for Registrar Approval…</p>
+                            <p class="text-gray-600 text-sm">Please check back later.</p>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Section Header -->
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Account Approval Status</h2>
+
+                <!-- Description -->
+                <p class="text-gray-600 mb-6">
+                    Hello <strong>{{ student.first_name }} {{ student.last_name }}</strong>, thank you for registering!
+                    {% if not rejected %}
+                        Your account is currently being reviewed by the Registrar's Office.
+                    {% else %}
+                        Your account was reviewed and rejected by the Registrar.
+                    {% endif %}
+                </p>
+
+                <!-- Approval / Rejection Message -->
+                <div class="mb-8 text-center">
+                    {% if profile.is_approved_by_registrar %}
+                        <p class="text-green-600 font-semibold text-lg mb-3">
+                            Your account has been approved!
+                        </p>
+                        <a href="{% url 'core:login' %}"
+                           class="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-xl shadow">
+                            Proceed to Login
+                        </a>
+
+                    {% elif rejected %}
+                        <p class="text-red-600 font-semibold text-lg mb-3">
+                            Your registration was rejected.
+                        </p>
+                        <p class="text-gray-700 mb-3">{{ reject_message }}</p>
+
+                        <!-- Acknowledge & Clear Account Form -->
+                        <form method="post" action="{% url 'core:accept_rejection' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="student_id" value="{{ profile.id }}">
+                            <button type="submit"
+                                    class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl shadow">
+                                Acknowledge & Clear Account
+                            </button>
+                        </form>
+
+                    {% else %}
+
+                        <!-- ✅ ADDED APPROVE FORM (ONLY CHANGE YOU REQUESTED) -->
+                        {% if request.user.is_staff %}
+                            <form method="post" action="{% url 'core:approve_profile' profile.id %}" class="mb-4">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-xl shadow">
+                                    Approve Account
+                                </button>
+                            </form>
+                            {% endif %}
+
+                        <!-- END OF ADDED CODE -->
+
+                        <p class="text-yellow-600 font-semibold text-lg">
+                            Waiting for Registrar Approval…
+                        </p>
+                        <p class="text-gray-500 mt-1">We will notify you once it's done.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Submitted Information -->
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="font-bold text-gray-800 mb-4 text-lg">Submitted Information</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <p><strong>Student No:</strong> {{ profile.student_number }}</p>
+                        <p><strong>Course:</strong> {{ profile.course }}</p>
+                        <p><strong>Year Level:</strong> {{ profile.year_level }}</p>
+                        <p><strong>Submitted:</strong> {{ profile.submitted_at|date:"M d, Y" }}</p>
+                    </div>
+
+                    {% if profile.document %}
+                        <div class="mt-4">
+                            <strong>Document:</strong>
+                            <a href="{{ profile.document.url }}" 
+                               target="_blank"
+                               class="text-blue-600 underline ml-1">
+                                View File
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- REFRESH BUTTON -->
+                {% if not rejected %}
+                <div class="text-center mt-8">
+                    <button onclick="location.reload()"
+                            class="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-xl shadow flex items-center space-x-2 mx-auto">
+                        <span>Refresh Status</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582M20 20v-5h-.581M5.582 9A7.5 7.5 0 0112 4.5c3.59 0 6.643 2.49 7.418 5.874M18.418 15A7.5 7.5 0 0112 19.5c-3.59 0-6.643-2.49-7.418-5.874" />
+                        </svg>
+                    </button>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .animate-spin-slow {
+        animation: spin 3s linear infinite;
+    }
+</style>
+{% endblock %}
